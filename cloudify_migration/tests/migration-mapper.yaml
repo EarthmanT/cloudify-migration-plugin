@@ -1,0 +1,53 @@
+########
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+
+
+migration:
+  common_fields:
+      - common_field_one
+      - common_field_two
+  nodes_to_keep:
+    - name: node_three
+    - name: node_not
+      type: type.not
+  nodes_to_remove:
+    - type: type.one
+      mappings:
+        - set: variable_one
+          source: properties.variable_one
+    - type: type.two
+      mappings:
+        - set: variable_two
+          source: properties.config.variable_two
+  nodes_to_add:
+    - name: node_one_converted
+      type: type.three
+      mappings:
+        - set: properties.variable_one
+          source: variable_one
+    - name: node_two_converted
+      type: type.four
+      mappings:
+        - set: properties.resource_config.variable_two
+          source: variable_two
+    - name: new_resource
+      type: type.five
+      mappings:
+        - set:
+            properties.variables:
+              variable_one: variable_one
+              variable_two: variable_two
+          source: variable_two
+          source: variable_one

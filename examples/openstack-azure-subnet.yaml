@@ -1,0 +1,15 @@
+conversions:
+
+  - common_fields:
+      - resource_id
+      - use_external_resource
+    old_resources:
+      - type: cloudify.openstack.nodes.Subnet
+        mappings:
+          - set: subnet_cidr
+            source: subnet.cidr
+    new_resources:
+      - type: cloudify.azure.nodes.network.Subnet
+        mappings:
+          - set: properties.resource_config.addressPrefix
+            source: subnet_cidr
