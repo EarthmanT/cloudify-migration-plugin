@@ -1,0 +1,36 @@
+########
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+
+
+def merge_dicts(_source, _destination):
+    for key, value in _source.items():
+        if isinstance(value, dict):
+            node = _destination.setdefault(key, {})
+            merge_dicts(value, node)
+        else:
+            _destination[key] = value
+    return _destination
+
+
+def get_value_by_key(dictionary, find_key):
+    if not isinstance(dictionary, dict):
+        return
+    for key, value in dictionary.iteritems():
+        if key == find_key:
+            return value
+        elif isinstance(value, dict):
+            return get_value_by_key(value, find_key)
+        else:
+            return

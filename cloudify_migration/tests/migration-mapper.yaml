@@ -29,6 +29,7 @@ mappings:
       - value: variable_two
         elements_path: properties.config.variable_two
         elements_types: dict.dict.string
+
   node.type.three:
     node_type: type.three
     mapping_direction: destination
@@ -59,18 +60,3 @@ mappings:
       - value: nested_property
         elements_path: properties.config.attributes.nested_property
         elements_types: dict.dict.list.string
-
-#    - name: new_resource
-#      type: type.five
-#      mappings:
-
-#  common_fields:
-#      - common_field_one
-#      - common_field_two
-#  nodes_to_keep:
-#    - name: node_three
-#    - name: node_not
-#      type: type.not
-#
-#  nodes_to_add:
-#

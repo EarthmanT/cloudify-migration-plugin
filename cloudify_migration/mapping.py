@@ -17,6 +17,7 @@ from copy import deepcopy
 
 from cloudify_migration import constants
 from cloudify_migration.exceptions import MigrationException
+from cloudify_migration.utils import merge_dicts
 
 
 class MigrationMappingMemberSpecElement(object):
@@ -97,6 +98,10 @@ class MigrationMappingMemberSpec(object):
             e = MigrationMappingMemberSpecElement(**init_args)
             element_list.insert(0, e)
         return element_list
+
+    @property
+    def elements(self):
+        return self._elements
 
     @property
     def specification(self):
@@ -194,14 +199,3 @@ class MigrationMapping(object):
             if _name == member_name:
                 return _member
         return None
-
-
-def merge_dicts(_source, _destination):
-    for key, value in _source.items():
-        if isinstance(value, dict):
-            # get node or create one
-            node = _destination.setdefault(key, {})
-            merge_dicts(value, node)
-        else:
-            _destination[key] = value
-    return _destination

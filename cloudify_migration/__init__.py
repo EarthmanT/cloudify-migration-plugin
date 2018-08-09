@@ -19,6 +19,7 @@ from cloudify_migration import constants
 from cloudify_migration.blueprint import MigrationBlueprint
 from cloudify_migration.exceptions import MigrationException
 from cloudify_migration.mapping import MigrationMapping
+from cloudify_migration.variables import MigrationVariable
 
 
 class CloudifyMigration(object):
@@ -84,3 +85,19 @@ class CloudifyMigration(object):
 
     def read_mapping_yaml(self, mapping_yaml_file):
         self.update_mapping_yaml(self.read_yaml_file(mapping_yaml_file))
+
+    def _get_variables_and_assign_values(self):
+        variable_mappings = {}
+        for member in self.mapping.members:
+            if not member.mapping_direction == 'source':
+                continue
+            for mapping_spec in member.mapping_specs:
+                variable = MigrationVariable(
+                    mapping_spec.value,
+                    mapping_spec.specification['specification'])
+                variable_mappings.update({mapping_spec.value: variable})
+        return variable_mappings
+
+    @property
+    def variables(self):
+        return self._get_variables_and_assign_values()

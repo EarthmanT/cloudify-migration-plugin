@@ -25,10 +25,7 @@ from cloudify.state import current_ctx
 from cloudify_cli.utils import (
     get_import_resolver, is_validate_definitions_version)
 from dsl_parser.parser import parse_from_path
-# from cloudify_migration import constants
 from cloudify_migration import CloudifyMigration
-# from cloudify_migration.exceptions import MigrationException
-# from cloudify_migration.mapping import MigrationMapping
 
 
 class TestMigration(unittest.TestCase):
@@ -265,6 +262,13 @@ class TestMigration(unittest.TestCase):
         }
         return data
 
+    @property
+    def expected_variables(self):
+        return {
+            'variable_one': 'variable_one',
+            'variable_two': 'variable_two'
+        }
+
     def test_0_cloudify_migration_properties(self):
         ctx = self.get_ctx()
         cfy_migration = CloudifyMigration(
@@ -349,21 +353,26 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(test_member.node_type, 'type.five')
         self.assertEqual(test_member.mapping_direction, 'destination')
         self.assertEqual(len(test_member.mapping_specs), 4)
+        self.assertEqual(len(cfy_migration.variables), 2)
+        test_variables = {}
+        for k, v in cfy_migration.variables.iteritems():
+            test_variables[k] = v.value
+        self.assertEqual(test_variables, self.expected_variables)
         self.assertEqual(
             test_member.merged_specifications, self.merged_mapping_specs)
 
-    def test_1_old_blueprint_valid(self):
-        ''' Validate the old blueprint data as YAML file.
-        '''
+    def test_3_old_blueprint_valid(self):
+        """ Validate the old blueprint data as YAML file.
+        """
         self._validate_blueprint(self.old_blueprint_file.name)
 
-    def test_2_old_blueprint_with_plugin_yaml_valid(self):
-        ''' Validate the old blueprint data as YAML file with plugin.yaml added.
-        '''
+    def test_4_old_blueprint_with_plugin_yaml_valid(self):
+        """ Validate the old blueprint data as YAML file with plugin.yaml added.
+        """
 
         self._validate_blueprint(self.modified_blueprint_file.name)
 
-    def test_3_new_blueprint_valid(self):
-        ''' Validate the new blueprint data as YAML file.
-        '''
+    def test_5_new_blueprint_valid(self):
+        """ Validate the new blueprint data as YAML file.
+        """
         self._validate_blueprint(self.new_blueprint_file.name)
