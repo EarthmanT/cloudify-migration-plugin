@@ -13,24 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-
-# Keys
-RESOURCE_ATTRIBUTE = 'resource'
-COMMON_FIELDS = 'common_fields'
-NODES_TO_KEEP = 'nodes_to_keep'
-NODES_TO_REMOVE = 'nodes_to_remove'
-NODES_TO_ADD = 'nodes_to_add'
 BLUEPRINT_YAML = 'blueprint_yaml'
-REMOVED_NODES = 'removed_nodes'
-NT = 'node_templates'
-VARS = 'variables'
-PROPERTIES = 'properties'
-TYPE = 'type'
-
-# Validation Error messages
-VALIDATE_FIELD_TYPE = 'Migration field "{0}" must be a {1}'
-VALIDATE_FIELD_CONTENT = 'Migration field "{0}" must specify {1}'
-
-# Operations
-OPERATION_REMOVE_NODES = 'Failed to remove nodes because {0}'
-OPERATION_ADD_NODES = 'Failed to add nodes because {0}'
+MAPPING_YAML = 'mapping_yaml'
+MAPPINGS = 'mappings'
