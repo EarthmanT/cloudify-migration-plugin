@@ -13,8 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-
 mappings:
+
   node.type.one:
     node_type: type.one
     mapping_direction: source
@@ -22,6 +22,7 @@ mappings:
       - value: variable_one
         elements_path: properties.variable_one
         elements_types: dict.string
+
   node.type.two:
     node_type: type.two
     mapping_direction: source
@@ -37,6 +38,7 @@ mappings:
       - value: variable_one
         elements_path: properties.variable_one
         elements_types: dict.string
+
   node.type.four:
     node_type: type.four
     mapping_direction: destination
@@ -44,6 +46,7 @@ mappings:
       - value: variable_two
         elements_path: properties.resource_config.variable_two
         elements_types: dict.dict.string
+
   node.type.five:
     node_type: type.five
     mapping_direction: destination
@@ -60,3 +63,32 @@ mappings:
       - value: nested_property
         elements_path: properties.config.attributes.nested_property
         elements_types: dict.dict.list.string
+
+removals:
+  - key: type.one
+    type: node_type
+    remove:
+      - node_types
+      - node_templates
+  - key: type.two
+    type: node_type
+    remove:
+      - node_types
+      - node_templates
+
+additions:
+  - key: type.three
+    type: node_type
+    add:
+      - node_types
+      - node_templates
+  - key: type.four
+    type: node_type
+    add:
+      - node_types
+      - node_templates
+  - key: type.five
+    type: node_type
+    add:
+      - node_types
+      - node_templates

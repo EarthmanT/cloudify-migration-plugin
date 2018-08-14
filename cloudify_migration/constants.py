@@ -13,6 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+ADDITIONS = 'additions'
 BLUEPRINT_YAML = 'blueprint_yaml'
 MAPPING_YAML = 'mapping_yaml'
 MAPPINGS = 'mappings'
+REMOVALS = 'removals'

@@ -203,7 +203,7 @@ class TestMigration(unittest.TestCase):
                 }
             },
             'node_templates': {
-                'node_one_converted': {
+                'node_one_translated': {
                     'type': 'type.three',
                     'properties': {
                         'common_field_two': '2',
@@ -211,7 +211,7 @@ class TestMigration(unittest.TestCase):
                         'variable_one': 'one'
                     }
                 },
-                'node_two_converted': {
+                'node_two_translated': {
                     'type': 'type.four',
                     'properties': {
                         'common_field_one': 'one',
@@ -269,19 +269,103 @@ class TestMigration(unittest.TestCase):
             'variable_two': 'variable_two'
         }
 
+    @property
+    def expected_new_node_types(self):
+        return [
+            {
+                'type.one': {
+                    'properties': {
+                        'common_field_two': {
+                            'default': {}
+                        },
+                        'common_field_one': {
+                            'default': {}
+                        },
+                        'variable_one': {
+                            'default': {
+                                'required': True,
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }, {
+                'type.five': {
+                    'properties': {
+                        'variables': {
+                            'default': {
+                                'new_variable': 'new_variable',
+                                'variable_two': 'variable_two',
+                                'variable_one': 'variable_one'
+                            }
+                        },
+                        'config': {
+                            'default': {
+                                'attributes': [
+                                    'nested_property', 'nested_property']
+                            }
+                        }
+                    },
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }, {
+                'type.two': {
+                    'properties': {
+                        'common_field_two': {
+                            'default': {}
+                        },
+                        'common_field_one': {
+                            'default': {
+                                'required': True,
+                                'type': 'string'
+                            }
+                        },
+                        'config': {
+                            'default': {}
+                        }
+                    },
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }, {
+                'cloudify.nodes.Root': {
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }, {
+                'type.three': {
+                    'properties': {
+                        'variable_one': {
+                            'default': 'variable_one'
+                        }
+                    },
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }, {
+                'type.four': {
+                    'properties': {
+                        'resource_config': {
+                            'default': {
+                                'variable_two': 'variable_two'
+                            }
+                        }
+                    },
+                    'derived_from': 'cloudify.nodes.Root'
+                }
+            }]
+
     def test_0_cloudify_migration_properties(self):
         ctx = self.get_ctx()
         cfy_migration = CloudifyMigration(
             ctx, self.migration_mapping_file_name)
         self.assertTrue(hasattr(cfy_migration, 'logger'))
         self.assertTrue(hasattr(cfy_migration, 'blueprint'))
-        self.assertTrue(hasattr(cfy_migration, 'read_blueprint_yaml'))
+        self.assertTrue(hasattr(cfy_migration, '_read_blueprint_yaml'))
         self.assertTrue(hasattr(cfy_migration, 'update_blueprint_yaml'))
-        self.assertTrue(hasattr(cfy_migration, 'blueprint_yaml'))
+        self.assertTrue(hasattr(cfy_migration, '_blueprint_yaml'))
         self.assertTrue(hasattr(cfy_migration, 'mapping'))
         self.assertTrue(hasattr(cfy_migration, 'update_mapping_yaml'))
-        self.assertTrue(hasattr(cfy_migration, 'read_mapping_yaml'))
-        self.assertTrue(hasattr(cfy_migration, 'mapping_yaml'))
+        self.assertTrue(hasattr(cfy_migration, '_read_mapping_yaml'))
+        self.assertTrue(hasattr(cfy_migration, '_mapping_yaml'))
 
     def test_1_cloudify_migration_blueprint_properties(self):
         ctx = self.get_ctx()
@@ -315,17 +399,16 @@ class TestMigration(unittest.TestCase):
             self.assertTrue(hasattr(v, 'type'))
             self.assertTrue(hasattr(v, 'properties'))
             self.assertTrue(hasattr(v, 'relationships'))
-            self.assertTrue(hasattr(v, 'update_properties'))
             self.assertTrue(hasattr(v, '__dict__'))
         self.assertEqual(len(cfy_migration.blueprint.node_templates), 3)
         test_node_template = cfy_migration.blueprint.node_templates.get(
             'node_one')
         self.assertEqual(test_node_template.type, 'type.one')
-        self.assertEqual(test_node_template.properties, {
-                        'common_field_two': '2',
-                        'common_field_one': 'one',
-                        'variable_one': 'one'
-        })
+        for k, v in test_node_template.properties.iteritems():
+            if k == 'common_field_two':
+                self.assertEqual(v.value, '2')
+            elif k == 'common_field_one' or k == 'variable_one':
+                self.assertEqual(v.value, 'one')
         self.assertEqual(test_node_template.type, 'type.one')
 
         self.assertTrue(hasattr(cfy_migration.blueprint, 'outputs'))
@@ -360,6 +443,56 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(test_variables, self.expected_variables)
         self.assertEqual(
             test_member.merged_specifications, self.merged_mapping_specs)
+        old_blueprint = deepcopy(cfy_migration.blueprint)
+        cfy_migration.set_variables()
+        new_blueprint = cfy_migration.blueprint
+        self.assertNotEqual(new_blueprint, old_blueprint)
+        self.assertNotIn('type.five', old_blueprint.node_types)
+        self.assertIn('type.five', new_blueprint.node_types)
+        self.assertNotIn('type.four', old_blueprint.node_types)
+        self.assertIn('type.four', new_blueprint.node_types)
+        self.assertNotIn('type.three', old_blueprint.node_types)
+        self.assertIn('type.three', new_blueprint.node_types)
+        self.assertEqual(
+            self.expected_new_node_types,
+            [v.__dict__ for k, v in new_blueprint.node_types.items()])
+        self.assertIn(
+            'type.five',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertIn(
+            'type.three',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertIn(
+            'type.four',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertIn(
+            'cloudify.nodes.Root',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertNotIn(
+            'type.one',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertNotIn(
+            'type.two',
+            cfy_migration.translated_blueprint.yaml['node_types'])
+        self.assertIn(
+            'type_four_generated',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        self.assertIn(
+            'node_three',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        self.assertIn(
+            'type_five_generated',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        self.assertIn(
+            'type_three_generated',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        self.assertNotIn(
+            'node_two',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        self.assertNotIn(
+            'node_one',
+            cfy_migration.translated_blueprint.yaml['node_templates'])
+        # self.assertTrue(False)
 
     def test_3_old_blueprint_valid(self):
         """ Validate the old blueprint data as YAML file.

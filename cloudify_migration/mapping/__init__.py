@@ -16,8 +16,63 @@
 from copy import deepcopy
 
 from cloudify_migration import constants
+from cloudify_migration.blueprint import NodeType
 from cloudify_migration.exceptions import MigrationException
 from cloudify_migration.utils import merge_dicts
+
+
+class TranslationBase(object):
+
+    def __init__(self, definition):
+        self.definition = definition
+        self.key = self.definition['key']
+        self.type = self.definition['type']
+        self.is_node_type = True if self.type == 'node_type' else False
+        self.is_node_template = True if self.type == 'node_template' else False
+
+
+class TranslationAddition(TranslationBase):
+
+    @property
+    def add(self):
+        return self.definition['add']
+
+    @property
+    def add_node_types(self):
+        return True if 'node_types' in self.add else False
+
+    @property
+    def add_node_templates(self):
+        return True if 'node_templates' in self.add else False
+
+    @property
+    def node_type_to_add(self):
+        if self.is_node_type:
+            return NodeType(self.key)
+        else:
+            raise NotImplemented('Additions do not do node templates.')
+
+    @property
+    def node_template_to_add(self):
+        if self.is_node_type:
+            return self.node_type_to_add.generate_node_template()
+        else:
+            raise NotImplemented('Additions do not do node templates.')
+
+
+class TranslationRemoval(TranslationBase):
+
+    @property
+    def remove(self):
+        return self.definition['remove']
+
+    @property
+    def remove_node_types(self):
+        return True if 'node_types' in self.remove else False
+
+    @property
+    def remove_node_templates(self):
+        return True if 'node_templates' in self.remove else False
 
 
 class MigrationMappingMemberSpecElement(object):
@@ -178,9 +233,18 @@ class MigrationMapping(object):
     def __init__(self, mapping_yaml):
         self._members = {}
         self.yaml = mapping_yaml
+        self._additions = self.yaml.get(constants.ADDITIONS)
+        self._removals = self.yaml.get(constants.REMOVALS)
         self._mappings = self.yaml.get(constants.MAPPINGS)
         for k, v in self._mappings.items():
             self.update_members(k, MigrationMappingMember(k, v))
+
+    @property
+    def additions(self):
+        addition_list = []
+        for _addition in self._additions:
+            addition_list.append(TranslationAddition(_addition))
+        return addition_list
 
     @property
     def members(self):
@@ -188,6 +252,13 @@ class MigrationMapping(object):
         for _, _member in self._members.items():
             member_list.append(_member)
         return member_list
+
+    @property
+    def removals(self):
+        removal_list = []
+        for _removal in self._removals:
+            removal_list.append(TranslationRemoval(_removal))
+        return removal_list
 
     def update_members(self, member_key, member_definition):
         if member_key in self._members:
