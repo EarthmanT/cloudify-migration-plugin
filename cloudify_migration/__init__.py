@@ -83,87 +83,6 @@ class CloudifyMigration(object):
     def variables(self):
         return self._get_variables()
 
-    def _get_variables(self):
-        variable_mappings = {}
-        for member in self.mapping.members:
-            if not member.mapping_direction == 'source':
-                # We only assign variables from source mapping members.
-                continue
-            for mapping_spec in member.mapping_specs:
-                variable = MigrationVariable(
-                    mapping_spec.value,
-                    mapping_spec.specification['specification'])
-                variable_mappings.update({mapping_spec.value: variable})
-        return variable_mappings
-
-    def _read_blueprint_yaml(self, blueprint_yaml_file):
-        self.update_blueprint_yaml(read_yaml_file(blueprint_yaml_file))
-
-    def _read_mapping_yaml(self, mapping_yaml_file):
-        self.update_mapping_yaml(read_yaml_file(mapping_yaml_file))
-
-    def _write_blueprint_yaml(self, blueprint_path=None, yaml_content=None):
-        yaml_content = yaml_content or self.blueprint.yaml
-        if not blueprint_path:
-            f = NamedTemporaryFile()
-            blueprint_path = f.name
-        write_yaml_file(blueprint_path, yaml_content)
-
-    def update_blueprint_yaml(self, blueprint_yaml=None):
-        blueprint_yaml = blueprint_yaml or self.blueprint_yaml
-        self.runtime_properties[constants.BLUEPRINT_YAML] = blueprint_yaml
-
-    def update_mapping_yaml(self, mapping_yaml=None):
-        mapping_yaml = mapping_yaml or self.mapping_yaml
-        self.runtime_properties[constants.MAPPING_YAML] = mapping_yaml
-
-    def _set_node_type_variable(self,
-                                node_type_key,
-                                mapping_specs,
-                                _blueprint=None):
-        if node_type_key not in _blueprint.node_types:
-            node_type = NodeType(node_type_key, {})
-        else:
-            node_type = _blueprint.node_types.get(node_type_key)
-        for spec in mapping_specs:
-            variable = self.variables.get(spec.value)
-            node_type.update_node(
-                spec.specification['specification'], variable)
-        _blueprint.update_yaml_node_types(node_type.__dict__)
-
-    def _set_node_template_variable(self,
-                                    node_template_key,
-                                    mapping_specs,
-                                    _blueprint=None):
-        if node_template_key not in _blueprint.node_types:
-            node_template = NodeTemplate(node_template_key, {})
-        else:
-            node_template = _blueprint.node_templates.get(node_template_key)
-        for spec in mapping_specs:
-            variable = self.variables.get(spec.value)
-            node_template.update_node(
-                spec.specification['specification'], variable)
-        _blueprint.update_yaml_node_templates(node_template.__dict__)
-
-    def set_variables(self, _blueprint=None):
-        _blueprint = _blueprint or self.blueprint
-        for member in self.mapping.members:
-            if not member.mapping_direction == 'destination':
-                continue
-            if member.node_type and not member.node_name:
-                self._set_node_type_variable(
-                    member.node_type,
-                    member.mapping_specs,
-                    _blueprint)
-            elif member.node_type and member.node_name:
-                self._set_node_template_variable(
-                    member.node_name,
-                    member.mapping_specs,
-                    _blueprint
-                )
-            else:
-                raise NotImplemented('Unsupported case called.')
-
     def _effect_additions(self, _blueprint=None):
         _blueprint = _blueprint or self.blueprint
         for _addition in self.mapping.additions:
@@ -195,9 +114,95 @@ class CloudifyMigration(object):
                 raise NotImplemented(
                     'Only node_types can be added right not.')
 
+    def _get_variables(self):
+        variable_mappings = {}
+        for member in self.mapping.members:
+            if not member.mapping_direction == 'source':
+                # We only assign variables from source mapping members.
+                continue
+            for mapping_spec in member.mapping_specs:
+                variable = MigrationVariable(
+                    mapping_spec.value,
+                    mapping_spec.specification['specification'])
+                variable_mappings.update({mapping_spec.value: variable})
+        return variable_mappings
+
+    def _read_blueprint_yaml(self, blueprint_yaml_file):
+        self.update_blueprint_yaml(read_yaml_file(blueprint_yaml_file))
+
+    def _read_mapping_yaml(self, mapping_yaml_file):
+        self.update_mapping_yaml(read_yaml_file(mapping_yaml_file))
+
+    def _set_node_type_variable(self,
+                                node_type_key,
+                                mapping_specs,
+                                _blueprint=None):
+        if node_type_key not in _blueprint.node_types:
+            node_type = NodeType(node_type_key, {})
+        else:
+            node_type = _blueprint.node_types.get(node_type_key)
+        for spec in mapping_specs:
+            variable = self.variables.get(spec.value)
+            node_type.update_node(
+                spec.specification['specification'], variable)
+        _blueprint.update_yaml_node_types(node_type.__dict__)
+
+    def _set_node_template_variable(self,
+                                    node_template_key,
+                                    mapping_specs,
+                                    _blueprint=None):
+        if node_template_key not in _blueprint.node_templates:
+            node_template = NodeTemplate(node_template_key, {})
+        else:
+            node_template = _blueprint.node_templates.get(node_template_key)
+        for spec in mapping_specs:
+            variable = self.variables.get(spec.value)
+            node_template.update_node(
+                spec.specification['specification'], variable)
+        _blueprint.update_yaml_node_templates(node_template.__dict__)
+
+    def _write_blueprint_yaml(self, blueprint_path=None, yaml_content=None):
+        yaml_content = yaml_content or self.blueprint.yaml
+        if not blueprint_path:
+            f = NamedTemporaryFile()
+            blueprint_path = f.name
+        write_yaml_file(blueprint_path, yaml_content)
+        return blueprint_path
+
     def _translate_blueprint(self):
         _blueprint = deepcopy(self.blueprint)
         self._effect_additions(_blueprint)
         self.set_variables(_blueprint)
         self._effect_removals(_blueprint)
         return _blueprint
+
+    def write_translated_blueprint(self, _path=None, _blueprint=None):
+        _blueprint = _blueprint or self.translated_blueprint
+        return self._write_blueprint_yaml(_path, _blueprint.yaml)
+
+    def update_blueprint_yaml(self, blueprint_yaml=None):
+        blueprint_yaml = blueprint_yaml or self.blueprint_yaml
+        self.runtime_properties[constants.BLUEPRINT_YAML] = blueprint_yaml
+
+    def update_mapping_yaml(self, mapping_yaml=None):
+        mapping_yaml = mapping_yaml or self.mapping_yaml
+        self.runtime_properties[constants.MAPPING_YAML] = mapping_yaml
+
+    def set_variables(self, _blueprint=None):
+        _blueprint = _blueprint or self.blueprint
+        for member in self.mapping.members:
+            if not member.mapping_direction == 'destination':
+                continue
+            if member.node_type and not member.node_name:
+                self._set_node_type_variable(
+                    member.node_type,
+                    member.mapping_specs,
+                    _blueprint)
+            elif member.node_type and member.node_name:
+                self._set_node_template_variable(
+                    member.node_name,
+                    member.mapping_specs,
+                    _blueprint
+                )
+            else:
+                raise NotImplemented('Unsupported case called.')

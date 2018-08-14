@@ -12,32 +12,3 @@
 # * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-# Attribute Names
-BLUEPRINT_YAML = 'blueprint_yaml'
-MAPPING_YAML = 'mapping_yaml'
-
-# Migration Mapper YAML Keys
-ADDITIONS = 'additions'
-MAPPINGS = 'mappings'
-REMOVALS = 'removals'
-
-# Blueprint YAML Keys
-DEFAULT = 'default'
-DERIVED = 'derived_from'
-DESC = 'description'
-IFACES = 'interfaces'
-IMPORTS = 'imports'
-INPUTS = 'inputs'
-NODE_PROPS = 'properties'
-NODE_TEMP = 'node_template'
-NODE_TEMPS = 'node_templates'
-NODE_TYPE = 'node_type'
-NODE_TYPES = 'node_types'
-OUTPUTS = 'outputs'
-RELS = 'relationships'
-REQ = 'required'
-TYPE = 'type'
-
-# OTHER
-ROOT_TYPE = 'cloudify.nodes.Root'

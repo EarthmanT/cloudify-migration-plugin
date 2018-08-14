@@ -26,6 +26,7 @@ from cloudify_cli.utils import (
     get_import_resolver, is_validate_definitions_version)
 from dsl_parser.parser import parse_from_path
 from cloudify_migration import CloudifyMigration
+from cloudify_migration.mapping.azure import sources as az_sources
 
 
 class TestMigration(unittest.TestCase):
@@ -242,7 +243,8 @@ class TestMigration(unittest.TestCase):
                 'node.type.two',
                 'node.type.three',
                 'node.type.four',
-                'node.type.five']
+                'node.type.five',
+                'node.cloudify.nodes.Root']
 
     @property
     def merged_mapping_specs(self):
@@ -425,7 +427,7 @@ class TestMigration(unittest.TestCase):
         self.assertTrue(hasattr(cfy_migration.mapping, 'yaml'))
         self.assertTrue(hasattr(cfy_migration.mapping, 'members'))
         self.assertTrue(hasattr(cfy_migration.mapping, 'update_members'))
-        self.assertEqual(len(cfy_migration.mapping.members), 5)
+        self.assertEqual(len(cfy_migration.mapping.members), 6)
         for mapping_member in cfy_migration.mapping.members:
             self.assertIn(mapping_member.key, self.mapping_member_names)
         for member_name in self.mapping_member_names:
@@ -443,6 +445,12 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(test_variables, self.expected_variables)
         self.assertEqual(
             test_member.merged_specifications, self.merged_mapping_specs)
+
+    def test_3_cloudify_migration_translating_blueprint(self):
+        ctx = self.get_ctx()
+        cfy_migration = CloudifyMigration(
+            ctx, self.migration_mapping_file_name,
+            self.old_blueprint_file.name)
         old_blueprint = deepcopy(cfy_migration.blueprint)
         cfy_migration.set_variables()
         new_blueprint = cfy_migration.blueprint
@@ -492,20 +500,38 @@ class TestMigration(unittest.TestCase):
         self.assertNotIn(
             'node_one',
             cfy_migration.translated_blueprint.yaml['node_templates'])
+        # print cfy_migration.translated_blueprint.yaml
         # self.assertTrue(False)
 
-    def test_3_old_blueprint_valid(self):
+    def test_4_old_blueprint_valid(self):
         """ Validate the old blueprint data as YAML file.
         """
         self._validate_blueprint(self.old_blueprint_file.name)
 
-    def test_4_old_blueprint_with_plugin_yaml_valid(self):
+    def test_5_old_blueprint_with_plugin_yaml_valid(self):
         """ Validate the old blueprint data as YAML file with plugin.yaml added.
         """
 
         self._validate_blueprint(self.modified_blueprint_file.name)
 
-    def test_5_new_blueprint_valid(self):
+    def test_6_new_blueprint_valid(self):
         """ Validate the new blueprint data as YAML file.
         """
         self._validate_blueprint(self.new_blueprint_file.name)
+
+    def test_7_azure_sources(self):
+        member = az_sources.AzureResourceGroupSource()
+        expected_common_spec = ['name', 'use_external_resource']
+        self.assertEqual(
+            member.node_type,
+            'cloudify.azure.nodes.ResourceGroup')
+        member_spec = [
+            s.specification['specification']['properties'].keys()[0]
+            for s in member.mapping_specs
+        ]
+        print member_spec
+        for spec in member_spec:
+            self.assertIn(
+                spec,
+                expected_common_spec)
+        self.assertEqual(len(member.mapping_specs), 2)

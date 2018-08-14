@@ -223,8 +223,9 @@ class MigrationMappingMember(object):
 
     def _get_mapping_specs(self):
         mapping_spec_list = []
-        for spec_yaml in self._mapping_specs_yaml:
-            mapping_spec_list.append(MigrationMappingMemberSpec(spec_yaml))
+        if self._mapping_specs_yaml:
+            for spec_yaml in self._mapping_specs_yaml:
+                mapping_spec_list.append(MigrationMappingMemberSpec(spec_yaml))
         return mapping_spec_list
 
 

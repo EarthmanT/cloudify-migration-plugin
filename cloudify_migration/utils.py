@@ -34,7 +34,6 @@ def merge_dicts(_source, _destination, variable=None):
 
     # TODO: I am uncertain about this condition.
     if isinstance(_destination, basestring) and not variable:
-        print "_destination, basestring", _destination
         _destination = {_destination: _destination}
     elif isinstance(_destination, basestring) and variable \
             and _destination == variable.key:

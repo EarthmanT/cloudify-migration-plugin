@@ -20,4 +20,7 @@ class MigrationVariable(object):
 
     def __init__(self, key, spec=None, value=None):
         self.key = key
-        self.value = get_value_by_key(spec, key)
+        if spec and not value:
+            self.value = get_value_by_key(spec, key)
+        else:
+            self.value = value

@@ -64,6 +64,10 @@ mappings:
         elements_path: properties.config.attributes.nested_property
         elements_types: dict.dict.list.string
 
+  node.cloudify.nodes.Root:
+    node_type: cloudify.nodes.Root
+    node_name: node_three
+
 removals:
   - key: type.one
     type: node_type
